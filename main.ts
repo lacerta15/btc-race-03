@@ -1,11 +1,11 @@
 import { BPS, runBars, type Bar, type BarsState, type BuyInput, type SellInput } from './vendor/makefun-bars.ts';
 
-// 120m Deep Washout Momentum Reversal Bot
+// 120m Deep Washout Momentum Reversal Bot - Optimized Revision
 // Analyzes Orca Whirlpool 1-minute bars for CBBTC, executes buy and sell orders on batch stream.
 
 const LOOKBACK_WINDOW = 120;
-const WASHOUT_BPS = 195;
-const PROFIT_TARGET_BPS = 470;
+const WASHOUT_BPS = 200;
+const PROFIT_TARGET_BPS = 480;
 const TRAILING_ACTIVE_BPS = 85;
 const TRAILING_DELTA_BPS = 55;
 const EMERGENCY_STOP_BPS = 300;
@@ -83,7 +83,12 @@ await runBars({
         const smaVal = windowSlice.reduce((s, v) => s + v, 0) / LOOKBACK_WINDOW;
         const dipBps = ((currentClose - smaVal) / smaVal) * 10000;
 
-        if (dipBps <= -WASHOUT_BPS && barsState.cash >= BigInt(barsState.hello.fees.min_notional_quote_units)) {
+        let requiredDipBps = WASHOUT_BPS;
+        if (memory.completedTrades === 0 && barsState.seq > 900) {
+          requiredDipBps = 115;
+        }
+
+        if (dipBps <= -requiredDipBps && barsState.cash >= BigInt(barsState.hello.fees.min_notional_quote_units)) {
           buys.push({
             side: 'buy',
             symbol: 'CBBTC',
